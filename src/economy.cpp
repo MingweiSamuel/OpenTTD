@@ -1768,13 +1768,20 @@ static void LoadUnloadVehicle(Vehicle *front)
 		/* if last speed is 0, we treat that as if no vehicle has ever visited the station. */
 		ge->last_speed = min(t, 255);
 		ge->last_age = min(_cur_year - front->build_year, 255);
-		ge->time_since_pickup = 0;
 
 		assert(v->cargo_cap >= v->cargo.StoredCount());
-		/* If there's goods waiting at the station, and the vehicle
-		 * has capacity for it, load it on the vehicle. */
+		/* Capacity available for loading more cargo. */
 		uint cap_left = v->cargo_cap - v->cargo.StoredCount();
-		if (cap_left > 0 && (v->cargo.ActionCount(VehicleCargoList::MTA_LOAD) > 0 || ge->cargo.AvailableCount() > 0) && MayLoadUnderExclusiveRights(st, v)) {
+
+		if (cap_left > 0) {
+
+		/* If vehicle can load cargo, reset time_since_pickup. */
+		ge->time_since_pickup = 0;
+
+		/* If there's goods waiting at the station, and the vehicle
+			* has capacity for it, load it on the vehicle. */
+		if ((v->cargo.ActionCount(VehicleCargoList::MTA_LOAD) > 0 || ge->cargo.AvailableCount() > 0) && MayLoadUnderExclusiveRights(st, v)) {
+
 			if (v->cargo.StoredCount() == 0) TriggerVehicle(v, VEHICLE_TRIGGER_NEW_CARGO);
 			if (_settings_game.order.gradual_loading) cap_left = min(cap_left, GetLoadAmount(v));
 
@@ -1816,6 +1823,8 @@ static void LoadUnloadVehicle(Vehicle *front)
 
 				dirty_vehicle = dirty_station = true;
 			}
+		}
+
 		}
 
 		if (v->cargo.StoredCount() >= v->cargo_cap) {
